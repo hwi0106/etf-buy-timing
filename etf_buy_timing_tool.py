@@ -85,19 +85,15 @@ else:
     raw_data['MA20'] = raw_data['Close'].rolling(window=20).mean()
     raw_data['STD20'] = raw_data['Close'].rolling(window=20).std()
     raw_data['Lower_BB'] = raw_data['MA20'] - 2 * raw_data['STD20']
-    # 지표 포함 후 최근 60거래일만 추출
-    data = raw_data.tail(60)
+    full_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
+    valid_data = raw_data.dropna(subset=full_cols)
+    data = valid_data.tail(60)
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
     st.stop()
 
-# 기술적 지표 계산
-data['RSI'] = compute_rsi(data['Close'], period=14)
-data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
-data['MA20'] = data['Close'].rolling(window=20).mean()
-data['STD20'] = data['Close'].rolling(window=20).std()
-data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
+# 이미 계산된 기술적 지표가 있으므로 생략
 
 # 유효한 컬럼만 필터링하여 dropna에 사용
 required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
@@ -154,7 +150,7 @@ if 'MA20' in data.columns and not data['MA20'].dropna().empty:
 if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0))
 
-data = data[data.index.to_series().diff().dt.days.fillna(1) <= 5]  # 장이 열린 날만 유지
+# 장이 열린 날만 표시하는 별도 필터는 불필요하며 show_nontrading=True가 처리함  # 장이 열린 날만 유지
 fig, _ = mpf.plot(
     data,
     type='candle',
