@@ -72,7 +72,7 @@ else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
     data = data[['Open', 'High', 'Low', 'Close']].dropna().astype(float)
-data = data[['Open', 'High', 'Low', 'Close']].astype(float)
+# 이미 컬럼 정제 및 형변환됨 → 이 라인 삭제 또는 주석 처리
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
