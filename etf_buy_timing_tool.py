@@ -6,7 +6,7 @@ import mplfinance as mpf
 import requests
 import ast
 
-# 한글 폰트 설정 (mplfinance용 rc 파라미터로도 가능)
+# 한글 폰트 설정
 plt.rcParams['font.family'] = 'DejaVu Sans'
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -74,21 +74,28 @@ if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
     st.stop()
 
-# 기술적 지표
+# 기술적 지표 계산
 data['RSI'] = compute_rsi(data['Close'], period=14)
 data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
 data['MA20'] = data['Close'].rolling(window=20).mean()
 data['STD20'] = data['Close'].rolling(window=20).std()
 data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 
-# NaN 데이터 안전 처리
-latest_row = data.dropna(subset=['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB'])
-if latest_row.empty:
-    st.error("기술적 지표 계산을 위한 데이터가 부족합니다.")
-    st.stop()
-latest = latest_row.iloc[-1]
+# 필요한 컬럼 모두 생성되어 있는지 확인 (없으면 np.nan으로 채움)
+import numpy as np
+required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
+for col in required_cols:
+    if col not in data.columns:
+        data[col] = np.nan
 
-# 조건 체크
+# 결측치 제거 후 마지막 행 추출
+filtered = data.dropna(subset=required_cols)
+if filtered.empty:
+    st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 30일치 이상 가격 데이터가 필요합니다.")
+    st.stop()
+latest = filtered.iloc[-1]
+
+# 매수 조건
 rsi_cond = latest['RSI'] < 40
 macd_cond = latest['MACD'] > latest['MACD_signal']
 ma20_cond = latest['Close'] < latest['MA20'] * 0.98
@@ -128,6 +135,6 @@ fig, _ = mpf.plot(
     datetime_format='%Y-%m-%d',
     xrotation=45,
     returnfig=True,
-    figsize=(10, 6),   # 크기 조정
+    figsize=(10, 6),
 )
 st.pyplot(fig)
