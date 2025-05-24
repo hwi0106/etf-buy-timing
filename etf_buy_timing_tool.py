@@ -72,7 +72,13 @@ if selected_etf == "KODEX S&P500":
 else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
-    data = data[['Open', 'High', 'Low', 'Close']].dropna().astype(float)
+    if data.empty:
+        st.error("해외 ETF 데이터를 불러오지 못했습니다.")
+        st.stop()
+    data = data[['Open', 'High', 'Low', 'Close']].copy()
+    for col in ['Open', 'High', 'Low', 'Close']:
+        data[col] = pd.to_numeric(data[col], errors='coerce')
+    data = data.dropna()
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
