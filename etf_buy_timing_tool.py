@@ -115,13 +115,8 @@ add_plots = []
 if 'MA20' in data.columns:
     add_plots.append(mpf.make_addplot(data['MA20'].dropna(), color='orange', width=1.2))
 if 'Lower_BB' in data.columns:
-    add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0)), color='orange', width=1.2),
-    mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0)
-]
-# mplfinance는 내부적으로 figure를 생성함으로 외부 figure 제거
-# fig3 = mpf.figure(style='charles', figsize=(10, 6)))
-# 외부 Axes 제거: mpf가 내부에서 처리
-# ax_main = fig3.add_subplot(1, 1, 1)
+    add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0))
+
 mpf.plot(
     data,
     type='candle',
@@ -133,7 +128,6 @@ mpf.plot(
     datetime_format='%Y-%m-%d',
     xrotation=45
 )
-# Streamlit에 직접 mplfinance 차트 표시
 st.pyplot(plt.gcf())
 
 # 기술 지표 테이블
