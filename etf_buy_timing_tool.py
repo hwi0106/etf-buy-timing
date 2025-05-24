@@ -94,8 +94,9 @@ data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
 existing_cols = [col for col in required_cols if col in data.columns and data[col].notna().any()]
 
-if not existing_cols:
-    st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
+missing_cols = [col for col in required_cols if col not in data.columns or data[col].isna().all()]
+if missing_cols:
+    st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {missing_cols}")
     st.stop()
 
 safe_cols = [col for col in existing_cols if col in data.columns and col in data.keys()]
