@@ -111,18 +111,18 @@ else:
 
 # 캔들차트 표시
 st.subheader("최근 30일간 캔들차트")
-fig3, ax3 = plt.subplots()
+add_plots = [
+    mpf.make_addplot(data['MA20'], color='orange', width=1.2),
+    mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0)
+]
+fig3 = mpf.figure(style='charles', figsize=(10, 6))
+ax_main = fig3.add_subplot(1, 1, 1)
 mpf.plot(
     data,
     type='candle',
-    style='charles',
-    mav=(20,),
+    ax=ax_main,
+    addplot=add_plots,
     volume=False,
-    addplot=[
-        mpf.make_addplot(data['MA20'], color='orange', width=1.2),
-        mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0)
-    ],
-    ax=ax3,
     show_nontrading=True,
     datetime_format='%Y-%m-%d',
     xrotation=45
