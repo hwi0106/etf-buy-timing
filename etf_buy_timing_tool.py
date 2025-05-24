@@ -116,3 +116,20 @@ if 'MA20' in data.columns and not data['MA20'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['MA20'].dropna(), color='orange', width=1.2))
 if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0))
+
+fig, axlist = mpf.plot(
+    data,
+    type='candle',
+    style='charles',
+    mav=(20,),
+    volume=False,
+    addplot=add_plots,
+    show_nontrading=True,
+    datetime_format='%Y-%m-%d',
+    xrotation=45,
+    returnfig=True
+)
+st.pyplot(fig).empty:
+    add_plots.append(mpf.make_addplot(data['MA20'].dropna(), color='orange', width=1.2))
+if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
+    add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0))
