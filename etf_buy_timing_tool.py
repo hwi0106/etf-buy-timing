@@ -76,8 +76,7 @@ else:
         st.error("해외 ETF 데이터를 불러오지 못했습니다.")
         st.stop()
     data = data[['Open', 'High', 'Low', 'Close']].copy()
-    for col in ['Open', 'High', 'Low', 'Close']:
-        data[col] = pd.to_numeric(data[col].values, errors='coerce')
+    data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna()
 
 if data.empty:
