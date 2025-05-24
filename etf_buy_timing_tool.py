@@ -85,9 +85,16 @@ else:
 
     def fetch_indicator(indicator):
         url = f"{base_url}/{indicator}?symbol={ticker}&interval=1day&outputsize=60&apikey={api_key}"
-        response = requests.get(url).json()
+        res = requests.get(url)
+        try:
+            response = res.json()
+        except ValueError:
+            st.error(f"[{indicator}] API 응답 오류: {res.text}")
+            return pd.DataFrame()
+
         if 'values' not in response:
-            return pd.Series(dtype=float)
+            st.warning(f"[{indicator}] 데이터가 없습니다.")
+            return pd.DataFrame()
         df = pd.DataFrame(response['values'])
         df['datetime'] = pd.to_datetime(df['datetime'])
         df.set_index('datetime', inplace=True)
