@@ -3,10 +3,11 @@ import pandas as pd
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
+import mplfinance as mpf
 import requests
 
 # 한글 폰트 설정
-plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['font.family'] = 'DejaVu Sans'
 plt.rcParams['axes.unicode_minus'] = False
 
 # RSI 계산 함수
@@ -30,7 +31,9 @@ def compute_macd(series, fast=12, slow=26, signal=9):
 
 # Naver Finance로부터 국내 주식 시세 불러오기
 def get_korean_stock_price(ticker):
-    url = f"https://api.finance.naver.com/siseJson.naver?symbol={ticker}&requestType=1&startTime=20240401&endTime=20240524&timeframe=day"
+    today = datetime.datetime.today().strftime("%Y%m%d")
+    one_month_ago = (datetime.datetime.today() - datetime.timedelta(days=30)).strftime("%Y%m%d")
+    url = f"https://api.finance.naver.com/siseJson.naver?symbol={ticker}&requestType=1&startTime={one_month_ago}&endTime={today}&timeframe=day"
     headers = {"User-Agent": "Mozilla/5.0"}
     res = requests.get(url, headers=headers)
     text = res.text.strip().replace('\n', '')
@@ -38,9 +41,9 @@ def get_korean_stock_price(ticker):
     df = pd.DataFrame(rows[1:], columns=rows[0])
     df['날짜'] = pd.to_datetime(df['날짜'])
     df.set_index('날짜', inplace=True)
-    df = df.rename(columns={"종가": "Close"})
-    df['Close'] = pd.to_numeric(df['Close'])
-    return df[['Close']]
+    df = df.rename(columns={"종가": "Close", "시가": "Open", "고가": "High", "저가": "Low"})
+    df[['Open', 'High', 'Low', 'Close']] = df[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric)
+    return df[['Open', 'High', 'Low', 'Close']]
 
 # Streamlit UI 설정
 st.title("ETF 매수 타이밍 분석기")
@@ -72,7 +75,7 @@ if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
     st.stop()
 
-# 기술적 지표 계산
+# 기술적 지표 계산 (Close 기준)
 data['RSI'] = compute_rsi(data['Close'], period=14)
 data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
 data['MA20'] = data['Close'].rolling(window=20).mean()
@@ -106,27 +109,11 @@ if true_count >= 2:
 else:
     st.warning("❌ 아직 매수 타이밍으로 보기 어렵습니다.")
 
-# 가격 차트 및 이평선
-st.subheader("가격 차트 및 이평선")
-fig, ax = plt.subplots()
-ax.plot(data.index, data['Close'], label='Close')
-ax.plot(data.index, data['MA20'], label='MA20')
-ax.plot(data.index, data['Lower_BB'], label='Lower BB')
-ax.legend()
-plt.xticks(rotation=45)
-st.pyplot(fig)
-
-# 최근 한달 일봉 차트
-st.subheader("최근 30일간 일봉 차트")
-fig2, ax2 = plt.subplots()
-ax2.plot(data.index, data['Close'], marker='o', linestyle='-', label='종가')
-ax2.plot(data.index, data['MA20'], linestyle='--', label='MA20')
-ax2.set_title(f"{selected_etf} 종가 흐름")
-ax2.set_ylabel("가격")
-ax2.legend()
-ax2.grid(True)
-plt.xticks(rotation=45)
-st.pyplot(fig2)
+# 캔들차트 표시
+st.subheader("최근 30일간 캔들차트")
+fig3, ax3 = plt.subplots()
+mpf.plot(data, type='candle', style='charles', mav=(20,), volume=False, ax=ax3, show_nontrading=True)
+st.pyplot(fig3)
 
 # 기술 지표 테이블
 st.subheader("기술적 지표 테이블")
