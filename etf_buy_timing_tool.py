@@ -86,7 +86,7 @@ if data.empty:
     st.stop()
 
 # 기술적 지표 계산
-if len(data) >= 26:
+if len(data) >= 20:
     data['RSI'] = compute_rsi(data['Close'], period=14)
     data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
     data['MA20'] = data['Close'].rolling(window=20).mean()
