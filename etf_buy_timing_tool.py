@@ -2,7 +2,12 @@ import streamlit as st
 import pandas as pd
 import datetime
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import requests
+
+# 한글 폰트 설정
+plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] = False
 
 # RSI 계산 함수
 def compute_rsi(series, period=14):
@@ -114,9 +119,11 @@ st.pyplot(fig)
 # 최근 한달 일봉 차트
 st.subheader("최근 30일간 일봉 차트")
 fig2, ax2 = plt.subplots()
-ax2.plot(data.index, data['Close'], marker='o', linestyle='-')
+ax2.plot(data.index, data['Close'], marker='o', linestyle='-', label='종가')
+ax2.plot(data.index, data['MA20'], linestyle='--', label='MA20')
 ax2.set_title(f"{selected_etf} 종가 흐름")
 ax2.set_ylabel("가격")
+ax2.legend()
 ax2.grid(True)
 plt.xticks(rotation=45)
 st.pyplot(fig2)
