@@ -84,11 +84,15 @@ if data.empty:
     st.stop()
 
 # 기술적 지표 계산
-data['RSI'] = compute_rsi(data['Close'], period=14)
-data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
-data['MA20'] = data['Close'].rolling(window=20).mean()
-data['STD20'] = data['Close'].rolling(window=20).std()
-data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
+if len(data) >= 26:
+    data['RSI'] = compute_rsi(data['Close'], period=14)
+    data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
+    data['MA20'] = data['Close'].rolling(window=20).mean()
+    data['STD20'] = data['Close'].rolling(window=20).std()
+    data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
+else:
+    st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 최소 26일 이상의 데이터가 필요합니다.")
+    st.stop()
 
 # 유효한 컬럼만 필터링하여 dropna에 사용
 required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
