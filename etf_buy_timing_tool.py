@@ -79,6 +79,13 @@ else:
     raw_data = raw_data[['Open', 'High', 'Low', 'Close']].dropna()
     raw_data[['Open', 'High', 'Low', 'Close']] = raw_data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     raw_data = raw_data.dropna()
+    # 기술적 지표 계산 (전체 데이터 기준)
+    raw_data['RSI'] = compute_rsi(raw_data['Close'], period=14)
+    raw_data['MACD'], raw_data['MACD_signal'] = compute_macd(raw_data['Close'])
+    raw_data['MA20'] = raw_data['Close'].rolling(window=20).mean()
+    raw_data['STD20'] = raw_data['Close'].rolling(window=20).std()
+    raw_data['Lower_BB'] = raw_data['MA20'] - 2 * raw_data['STD20']
+    # 지표 포함 후 최근 30거래일만 추출
     data = raw_data.tail(30)
 
 if data.empty:
