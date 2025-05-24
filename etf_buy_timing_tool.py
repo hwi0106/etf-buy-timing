@@ -147,7 +147,7 @@ if 'MA20' in data.columns and not data['MA20'].dropna().empty:
 if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0))
 
-fig, _ = mpf.plot(
+fig, axlist = mpf.plot(
     data,
     type='candle',
     style='charles',
