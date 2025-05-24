@@ -68,7 +68,7 @@ start_date = end_date - datetime.timedelta(days=30)
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
     data = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
+    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
