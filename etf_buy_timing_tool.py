@@ -93,7 +93,8 @@ if not existing_cols:
     st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
     st.stop()
 
-filtered = data.dropna(subset=existing_cols)
+safe_cols = [col for col in existing_cols if col in data.columns]
+filtered = data.dropna(subset=safe_cols)
 if filtered.empty:
     st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 30일치 이상 가격 데이터가 필요합니다.")
     st.stop()
