@@ -4,7 +4,7 @@ import numpy as np
 import datetime
 import requests
 import ast
-
+ 
 # 기술 지표 계산 함수들
 def compute_rsi(series, period=14):
     delta = series.diff()
