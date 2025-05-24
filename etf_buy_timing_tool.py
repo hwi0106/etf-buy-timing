@@ -2,14 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import datetime
-import matplotlib.pyplot as plt
-import mplfinance as mpf
 import requests
 import ast
-
-# 한글 폰트 설정 (matplotlib에서 캔들차트 한글 깨짐 방지)
-plt.rcParams['font.family'] = 'DejaVu Sans'
-plt.rcParams['axes.unicode_minus'] = False
 
 # 기술 지표 계산 함수들
 def compute_rsi(series, period=14):
@@ -51,8 +45,7 @@ def get_korean_stock_price(ticker):
     return df[['Open', 'High', 'Low', 'Close']]
 
 # Streamlit UI
-st.title("ETF 매수 타이밍 분석기")
-st.write("최근 30일간 기술적 지표를 분석하여 지금이 매수 타이밍인지 알려드립니다.")
+st.title("ETF 매수 타이밍 판별기")
 
 etfs = {
     "KODEX S&P500": "KODEX",
@@ -65,110 +58,42 @@ selected_etf = st.selectbox("ETF 종목을 선택하세요:", list(etfs.keys()))
 ticker = etfs[selected_etf]
 
 end_date = datetime.datetime.today()
-# 해외 ETF는 넉넉하게 데이터를 요청하고 최근 30 거래일만 자름
 start_date = end_date - datetime.timedelta(days=90)
 
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
 else:
     import yfinance as yf
-    raw_data = yf.download(ticker, start=start_date, end=end_date, progress=False)
-    if raw_data.empty:
+    data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+    if data.empty:
         st.error("해외 ETF 데이터를 가져올 수 없습니다.")
         st.stop()
-    raw_data = raw_data[['Open', 'High', 'Low', 'Close']].dropna()
-    raw_data[['Open', 'High', 'Low', 'Close']] = raw_data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    raw_data = raw_data.dropna()
-    # 기술적 지표 API 호출 - Twelvedata 예시
-    api_key = 'YOUR_API_KEY'  # 여기에 Twelvedata API 키 입력
-    base_url = 'https://api.twelvedata.com'
+    data = data[['Open', 'High', 'Low', 'Close']].dropna()
+    data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+    data = data.dropna()
 
-    def fetch_indicator(indicator):
-        url = f"{base_url}/{indicator}?symbol={ticker}&interval=1day&outputsize=60&apikey={api_key}"
-        res = requests.get(url)
-        try:
-            response = res.json()
-        except ValueError:
-            st.error(f"[{indicator}] API 응답 오류: {res.text}")
-            return pd.DataFrame()
+data['RSI'] = compute_rsi(data['Close'], period=14)
+data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
+data['MA20'] = data['Close'].rolling(window=20).mean()
+data['STD20'] = data['Close'].rolling(window=20).std()
+data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 
-        if 'values' not in response:
-            st.warning(f"[{indicator}] 데이터가 없습니다.")
-            return pd.DataFrame()
-        df = pd.DataFrame(response['values'])
-        df['datetime'] = pd.to_datetime(df['datetime'])
-        df.set_index('datetime', inplace=True)
-        return df.iloc[::-1]  # 최신순으로 정렬
-
-    rsi_df = fetch_indicator('rsi')
-    macd_df = fetch_indicator('macd')
-    bb_df = fetch_indicator('bollinger_bands')
-
-    raw_data.index = raw_data.index.tz_localize(None)
-    raw_data = raw_data.merge(rsi_df[['value']].rename(columns={'value': 'RSI'}), left_index=True, right_index=True, how='left')
-    raw_data = raw_data.merge(macd_df[['macd', 'signal']], left_index=True, right_index=True, how='left')
-    raw_data = raw_data.merge(bb_df[['lower_band']].rename(columns={'lower_band': 'Lower_BB'}), left_index=True, right_index=True, how='left')
-
-    raw_data['MA20'] = raw_data['Close'].rolling(window=20).mean()
-    raw_data['STD20'] = raw_data['Close'].rolling(window=20).std()
-
-    full_cols = ['RSI', 'macd', 'signal', 'MA20', 'STD20', 'Lower_BB']
-    # 존재하는 컬럼만 필터링
-    safe_cols = [col for col in full_cols if col in raw_data.columns and raw_data[col].notna().any()]
-    missing_cols = [col for col in full_cols if col not in raw_data.columns]
-    safe_cols = [col for col in full_cols if col in raw_data.columns and raw_data[col].notna().any()]
-    missing_cols = [col for col in full_cols if col not in raw_data.columns or raw_data[col].isna().all()]
-    if not safe_cols:
-        st.error(f"기술적 지표 컬럼이 누락되었거나 모두 NaN입니다. 누락/결측 컬럼: {missing_cols}")
-        st.stop()
-    try:
-        valid_data = raw_data.dropna(subset=safe_cols)
-    except KeyError as e:
-        st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {e}")
-        st.stop()
-    data = valid_data.tail(60)
+data = data.dropna(subset=['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB'])
 
 if data.empty:
-    st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
+    st.warning("최근 데이터가 부족해 분석할 수 없습니다.")
     st.stop()
 
-# 이미 계산된 기술적 지표가 있으므로 생략
+latest = data.iloc[-1]
 
-# 유효한 컬럼만 필터링하여 dropna에 사용
-required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
-existing_cols = []
-for col in required_cols:
-    if col in data.columns and data[col].notna().any():
-        existing_cols.append(col)
-
-if not existing_cols:
-    st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
-    st.stop()  # 경고 발생 방지를 위해 st.stop()은 단독 실행
-
-# dropna에서 오류가 발생하지 않도록 복사본을 사용
-safe_cols = [col for col in existing_cols if col in data.columns and col in data.keys()]
-data_filtered = data.copy()
-try:
-        filtered = data_filtered.dropna(subset=safe_cols)
-except KeyError as e:
-    st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {e}")
-    st.stop()
-if filtered.empty:
-    st.warning("기술적 지표 계산을 위한 데이터가 부족하여 분석을 건너뜁니다.")
-    st.stop()
-
-latest = filtered.iloc[-1]
-
-# 매수 조건 평가
 rsi_cond = latest['RSI'] < 40
-macd_cond = latest['macd'] > latest['signal']
+macd_cond = latest['MACD'] > latest['MACD_signal']
 ma20_cond = latest['Close'] < latest['MA20'] * 0.98
 bb_cond = latest['Close'] <= latest['Lower_BB'] * 1.05
 
 true_count = sum([rsi_cond, macd_cond, ma20_cond, bb_cond])
 
-# 결과 출력
-st.subheader(f"{selected_etf} 분석 결과")
+st.subheader(f"{selected_etf} 매수 타이밍 판별 결과")
 st.write(f"- RSI: {latest['RSI']:.2f} ({'충족' if rsi_cond else '비충족'})")
 st.write(f"- MACD > Signal: {macd_cond}")
 st.write(f"- 현재가 < MA20 * 0.98: {ma20_cond}")
@@ -176,31 +101,5 @@ st.write(f"- 현재가 ≦ 볼린저밴드 하단 +5%: {bb_cond}")
 
 if true_count >= 2:
     st.success("✅ 지금은 매수 타이밍일 수 있습니다. (2개 이상 조건 충족)")
-    if selected_etf == "SCHD":
-        st.info("**SCHD는 기술적 조정과 고배당 특성으로 인해 현재 가격이 특히 매력적인 매수 구간입니다. 장기 보유 + 배당 전략에 적합합니다.**")
 else:
     st.warning("❌ 아직 매수 타이밍으로 보기 어렵습니다.")
-
-# 캔들차트 표시
-st.subheader("최근 60일간 캔들차트")
-add_plots = []
-if 'MA20' in data.columns and not data['MA20'].dropna().empty:
-    add_plots.append(mpf.make_addplot(data['MA20'], color='orange', width=1.2))
-if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
-    add_plots.append(mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0))
-
-# 장이 열린 날만 표시하는 별도 필터는 불필요하며 show_nontrading=True가 처리함  # 장이 열린 날만 유지
-fig, _ = mpf.plot(
-    data,
-    type='candle',
-    style='charles',
-    mav=(20,),
-    volume=False,
-    addplot=add_plots,
-    show_nontrading=True,
-    datetime_format='%Y-%m-%d',
-    xrotation=45,
-    returnfig=True,
-    figsize=(10, 6),
-)
-st.pyplot(fig)
