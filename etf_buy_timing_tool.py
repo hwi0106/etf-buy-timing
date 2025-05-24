@@ -1,7 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import talib
+import pandas_ta as ta
 import datetime
 import matplotlib.pyplot as plt
 
@@ -31,8 +31,10 @@ if data.empty:
     st.stop()
 
 # 기술적 지표 계산
-data['RSI'] = talib.RSI(data['Close'], timeperiod=14)
-data['MACD'], data['MACD_signal'], _ = talib.MACD(data['Close'])
+data['RSI'] = ta.rsi(data['Close'], length=14)
+macd = ta.macd(data['Close'])
+data['MACD'] = macd['MACD_12_26_9']
+data['MACD_signal'] = macd['MACDs_12_26_9']
 data['MA20'] = data['Close'].rolling(window=20).mean()
 data['Lower_BB'] = data['MA20'] - 2 * data['Close'].rolling(window=20).std()
 
@@ -53,6 +55,7 @@ st.write(f"- 현재가 ≦ 볼린저밴드 하단 +5%: {bb_cond}")
 
 if true_count >= 2:
     st.success("✅ 지금은 매수 타이밍일 수 있습니다. (2개 이상 조건 충족)")
+    # SCHD 특화 추천 메시지
     if selected_etf == "SCHD":
         st.info("**SCHD는 기술적 조정과 고배당 특성으로 인해 현재 가격이 특히 매력적인 매수 구간입니다. 장기 보유 + 배당 전략에 적합합니다.**")
 else:
