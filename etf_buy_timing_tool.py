@@ -108,7 +108,7 @@ for col in required_cols:
 
 if not existing_cols:
     st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
-    st.stop()
+    st.stop()  # 경고 발생 방지를 위해 st.stop()은 단독 실행
 
 safe_cols = [col for col in existing_cols if col in data.columns and col in data.keys()]
 try:
@@ -117,7 +117,7 @@ except KeyError as e:
     st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {e}")
     st.stop()
 if filtered.empty:
-    st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 30일치 이상 가격 데이터가 필요합니다.")
+    st.warning("기술적 지표 계산을 위한 데이터가 부족하여 분석을 건너뜁니다.")
     st.stop()
 
 latest = filtered.iloc[-1]
