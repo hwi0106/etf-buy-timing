@@ -86,3 +86,41 @@ true_count = sum([
     int(ma20_cond),
     int(bb_cond)
 ])
+
+# 결과 출력
+st.subheader(f"{selected_etf} 분석 결과")
+st.write(f"- RSI: {data['RSI'].iloc[-1]:.2f} ({'충족' if rsi_cond else '비충족'})")
+st.write(f"- MACD > Signal: {macd_cond}")
+st.write(f"- 현재가 < MA20 * 0.98: {ma20_cond}")
+st.write(f"- 현재가 ≦ 볼린저밴드 하단 +5%: {bb_cond}")
+
+if true_count >= 2:
+    st.success("✅ 지금은 매수 타이밍일 수 있습니다. (2개 이상 조건 충족)")
+    if selected_etf == "SCHD":
+        st.info("**SCHD는 기술적 조정과 고배당 특성으로 인해 현재 가격이 특히 매력적인 매수 구간입니다. 장기 보유 + 배당 전략에 적합합니다.**")
+else:
+    st.warning("❌ 아직 매수 타이밍으로 보기 어렵습니다.")
+
+# 가격 차트 및 이평선
+st.subheader("가격 차트 및 이평선")
+fig, ax = plt.subplots()
+ax.plot(data.index, data['Close'], label='Close')
+ax.plot(data.index, data['MA20'], label='MA20')
+ax.plot(data.index, data['Lower_BB'], label='Lower BB')
+ax.legend()
+plt.xticks(rotation=45)
+st.pyplot(fig)
+
+# 최근 한달 일봉 차트
+st.subheader("최근 30일간 일봉 차트")
+fig2, ax2 = plt.subplots()
+ax2.plot(data.index, data['Close'], marker='o', linestyle='-')
+ax2.set_title(f"{selected_etf} 종가 흐름")
+ax2.set_ylabel("가격")
+ax2.grid(True)
+plt.xticks(rotation=45)
+st.pyplot(fig2)
+
+# 기술 지표 테이블
+st.subheader("기술적 지표 테이블")
+st.dataframe(data.tail(10))
