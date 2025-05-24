@@ -86,7 +86,12 @@ else:
     raw_data['STD20'] = raw_data['Close'].rolling(window=20).std()
     raw_data['Lower_BB'] = raw_data['MA20'] - 2 * raw_data['STD20']
     full_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
-    valid_data = raw_data.dropna(subset=full_cols)
+    # 존재하는 컬럼만 필터링
+    safe_cols = [col for col in full_cols if col in raw_data.columns and raw_data[col].notna().any()]
+    if not safe_cols:
+        st.error("기술적 지표 컬럼이 누락되었거나 NaN 값만 존재합니다.")
+        st.stop()
+    valid_data = raw_data.dropna(subset=safe_cols)
     data = valid_data.tail(60)
 
 if data.empty:
