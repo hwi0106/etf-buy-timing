@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 import requests
 import ast
 
-# 한글 폰트 설정
+# 한글 폰트 설정 (matplotlib에서 캔들차트 한글 깨짐 방지)
 plt.rcParams['font.family'] = 'DejaVu Sans'
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -47,6 +48,7 @@ def get_korean_stock_price(ticker):
         df[col] = pd.to_numeric(df[col], errors='coerce')
     return df[['Open', 'High', 'Low', 'Close']]
 
+# Streamlit UI
 st.title("ETF 매수 타이밍 분석기")
 st.write("최근 30일간 기술적 지표를 분석하여 지금이 매수 타이밍인지 알려드립니다.")
 
@@ -81,18 +83,23 @@ data['MA20'] = data['Close'].rolling(window=20).mean()
 data['STD20'] = data['Close'].rolling(window=20).std()
 data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 
-# 필요한 컬럼 모두 생성되어 있는지 확인 (없으면 np.nan으로 채움)
-import numpy as np
+# dropna용 컬럼 준비
 required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
 for col in required_cols:
     if col not in data.columns:
         data[col] = np.nan
 
-# 결측치 제거 후 마지막 행 추출
-filtered = data.dropna(subset=required_cols)
+existing_cols = [col for col in required_cols if col in data.columns]
+
+if not existing_cols:
+    st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
+    st.stop()
+
+filtered = data.dropna(subset=existing_cols)
 if filtered.empty:
     st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 30일치 이상 가격 데이터가 필요합니다.")
     st.stop()
+
 latest = filtered.iloc[-1]
 
 # 매수 조건
