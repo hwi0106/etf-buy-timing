@@ -65,10 +65,11 @@ selected_etf = st.selectbox("ETF 종목을 선택하세요:", list(etfs.keys()))
 ticker = etfs[selected_etf]
 
 end_date = datetime.datetime.today()
-start_date = end_date - datetime.timedelta(days=30)
+start_date = end_date - datetime.timedelta(days=60)  # 넉넉히 가져오고 최근 20거래일만 사용
 
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
+    data = data.tail(20)  # 최근 20거래일만 사용
 else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
@@ -78,6 +79,7 @@ else:
     data = data[['Open', 'High', 'Low', 'Close']].copy()
     data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna()
+    data = data.tail(20)  # 최근 20거래일만 사용
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
