@@ -93,9 +93,12 @@ if not existing_cols:
     st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
     st.stop()
 
-safe_cols = [col for col in existing_cols if col in data.columns]
-if safe_cols:
+safe_cols = [col for col in existing_cols if col in data.columns and col in data.keys()]
+try:
     filtered = data.dropna(subset=safe_cols)
+except KeyError as e:
+    st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {e}")
+    st.stop()
 else:
     st.error("기술적 지표 계산용 컬럼이 누락되어 분석할 수 없습니다.")
     st.stop()
