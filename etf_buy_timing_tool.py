@@ -99,9 +99,6 @@ try:
 except KeyError as e:
     st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {e}")
     st.stop()
-else:
-    st.error("기술적 지표 계산용 컬럼이 누락되어 분석할 수 없습니다.")
-    st.stop()
 if filtered.empty:
     st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 30일치 이상 가격 데이터가 필요합니다.")
     st.stop()
