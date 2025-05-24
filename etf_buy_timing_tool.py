@@ -111,8 +111,11 @@ else:
 
 # 캔들차트 표시
 st.subheader("최근 30일간 캔들차트")
-add_plots = [
-    mpf.make_addplot(data['MA20'], color='orange', width=1.2),
+add_plots = []
+if 'MA20' in data.columns:
+    add_plots.append(mpf.make_addplot(data['MA20'].dropna(), color='orange', width=1.2))
+if 'Lower_BB' in data.columns:
+    add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0)), color='orange', width=1.2),
     mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0)
 ]
 # mplfinance는 내부적으로 figure를 생성함으로 외부 figure 제거
