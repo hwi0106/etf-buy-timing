@@ -71,8 +71,13 @@ if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
 else:
     import yfinance as yf
-    data = yf.download(ticker, start=start_date, end=end_date)
-    data = data[['Open', 'High', 'Low', 'Close']].dropna().astype(float)
+    data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+    if data.empty or len(data) < 20:
+        st.error("해외 ETF 데이터가 충분하지 않습니다. 최소 20일치 이상 필요합니다.")
+        st.stop()
+    data = data[['Open', 'High', 'Low', 'Close']].copy()
+    data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+    data = data.dropna()
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
