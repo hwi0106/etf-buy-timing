@@ -79,18 +79,40 @@ else:
     raw_data = raw_data[['Open', 'High', 'Low', 'Close']].dropna()
     raw_data[['Open', 'High', 'Low', 'Close']] = raw_data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     raw_data = raw_data.dropna()
-    # 기술적 지표 계산 (전체 데이터 기준)
-    raw_data['RSI'] = compute_rsi(raw_data['Close'], period=14)
-    raw_data['MACD'], raw_data['MACD_signal'] = compute_macd(raw_data['Close'])
+    # 기술적 지표 API 호출 - Twelvedata 예시
+    api_key = 'YOUR_API_KEY'  # 여기에 Twelvedata API 키 입력
+    base_url = 'https://api.twelvedata.com'
+
+    def fetch_indicator(indicator):
+        url = f"{base_url}/{indicator}?symbol={ticker}&interval=1day&outputsize=60&apikey={api_key}"
+        response = requests.get(url).json()
+        if 'values' not in response:
+            return pd.Series(dtype=float)
+        df = pd.DataFrame(response['values'])
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        df.set_index('datetime', inplace=True)
+        return df.iloc[::-1]  # 최신순으로 정렬
+
+    rsi_df = fetch_indicator('rsi')
+    macd_df = fetch_indicator('macd')
+    bb_df = fetch_indicator('bollinger_bands')
+
+    raw_data.index = raw_data.index.tz_localize(None)
+    raw_data = raw_data.merge(rsi_df[['value']].rename(columns={'value': 'RSI'}), left_index=True, right_index=True, how='left')
+    raw_data = raw_data.merge(macd_df[['macd', 'signal']], left_index=True, right_index=True, how='left')
+    raw_data = raw_data.merge(bb_df[['lower_band']].rename(columns={'lower_band': 'Lower_BB'}), left_index=True, right_index=True, how='left')
+
     raw_data['MA20'] = raw_data['Close'].rolling(window=20).mean()
     raw_data['STD20'] = raw_data['Close'].rolling(window=20).std()
-    raw_data['Lower_BB'] = raw_data['MA20'] - 2 * raw_data['STD20']
-    full_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
+
+    full_cols = ['RSI', 'macd', 'signal', 'MA20', 'STD20', 'Lower_BB']
     # 존재하는 컬럼만 필터링
     safe_cols = [col for col in full_cols if col in raw_data.columns and raw_data[col].notna().any()]
     missing_cols = [col for col in full_cols if col not in raw_data.columns]
+    safe_cols = [col for col in full_cols if col in raw_data.columns and raw_data[col].notna().any()]
+    missing_cols = [col for col in full_cols if col not in raw_data.columns or raw_data[col].isna().all()]
     if not safe_cols:
-        st.error(f"기술적 지표 컬럼이 누락되었거나 NaN 값만 존재합니다. 누락된 컬럼: {missing_cols}")
+        st.error(f"기술적 지표 컬럼이 누락되었거나 모두 NaN입니다. 누락/결측 컬럼: {missing_cols}")
         st.stop()
     try:
         valid_data = raw_data.dropna(subset=safe_cols)
@@ -132,7 +154,7 @@ latest = filtered.iloc[-1]
 
 # 매수 조건 평가
 rsi_cond = latest['RSI'] < 40
-macd_cond = latest['MACD'] > latest['MACD_signal']
+macd_cond = latest['macd'] > latest['signal']
 ma20_cond = latest['Close'] < latest['MA20'] * 0.98
 bb_cond = latest['Close'] <= latest['Lower_BB'] * 1.05
 
