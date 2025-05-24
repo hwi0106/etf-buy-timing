@@ -11,6 +11,7 @@ import ast
 plt.rcParams['font.family'] = 'DejaVu Sans'
 plt.rcParams['axes.unicode_minus'] = False
 
+# 기술 지표 계산 함수들
 def compute_rsi(series, period=14):
     delta = series.diff()
     gain = delta.where(delta > 0, 0.0)
@@ -28,6 +29,7 @@ def compute_macd(series, fast=12, slow=26, signal=9):
     signal_line = macd.ewm(span=signal, adjust=False).mean()
     return macd, signal_line
 
+# 네이버에서 국내 주식 데이터 가져오기
 def get_korean_stock_price(ticker):
     today = datetime.datetime.today().strftime("%Y%m%d")
     one_month_ago = (datetime.datetime.today() - datetime.timedelta(days=30)).strftime("%Y%m%d")
@@ -83,13 +85,9 @@ data['MA20'] = data['Close'].rolling(window=20).mean()
 data['STD20'] = data['Close'].rolling(window=20).std()
 data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 
-# dropna용 컬럼 준비
+# 유효한 컬럼만 필터링하여 dropna에 사용
 required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
-for col in required_cols:
-    if col not in data.columns:
-        data[col] = np.nan
-
-existing_cols = [col for col in required_cols if col in data.columns]
+existing_cols = [col for col in required_cols if col in data.columns and data[col].notna().any()]
 
 if not existing_cols:
     st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
@@ -102,7 +100,7 @@ if filtered.empty:
 
 latest = filtered.iloc[-1]
 
-# 매수 조건
+# 매수 조건 평가
 rsi_cond = latest['RSI'] < 40
 macd_cond = latest['MACD'] > latest['MACD_signal']
 ma20_cond = latest['Close'] < latest['MA20'] * 0.98
@@ -110,6 +108,7 @@ bb_cond = latest['Close'] <= latest['Lower_BB'] * 1.05
 
 true_count = sum([rsi_cond, macd_cond, ma20_cond, bb_cond])
 
+# 결과 출력
 st.subheader(f"{selected_etf} 분석 결과")
 st.write(f"- RSI: {latest['RSI']:.2f} ({'충족' if rsi_cond else '비충족'})")
 st.write(f"- MACD > Signal: {macd_cond}")
@@ -123,13 +122,13 @@ if true_count >= 2:
 else:
     st.warning("❌ 아직 매수 타이밍으로 보기 어렵습니다.")
 
-# 캔들차트
+# 캔들차트 표시
 st.subheader("최근 30일간 캔들차트")
 add_plots = []
 if 'MA20' in data.columns and not data['MA20'].dropna().empty:
-    add_plots.append(mpf.make_addplot(data['MA20'].dropna(), color='orange', width=1.2))
+    add_plots.append(mpf.make_addplot(data['MA20'], color='orange', width=1.2))
 if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
-    add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0))
+    add_plots.append(mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0))
 
 fig, _ = mpf.plot(
     data,
