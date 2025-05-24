@@ -126,13 +126,7 @@ mpf.plot(
     show_nontrading=True,
     datetime_format='%Y-%m-%d',
     xrotation=45
-), volume=False, addplot=[
-    mpf.make_addplot(data['MA20'], color='orange', width=1.2),
-    mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0)
-], ax=ax3, show_nontrading=True, datetime_format='%Y-%m-%d', xrotation=45), volume=False, addplot=[
-    mpf.make_addplot(data['MA20'], color='orange', width=1.2),
-    mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0)
-], ax=ax3, show_nontrading=True), volume=False, ax=ax3, show_nontrading=True)
+)
 st.pyplot(fig3)
 
 # 기술 지표 테이블
