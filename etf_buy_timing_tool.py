@@ -1,9 +1,27 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import pandas_ta as ta
 import datetime
 import matplotlib.pyplot as plt
+
+# RSI 계산 함수
+def compute_rsi(series, period=14):
+    delta = series.diff()
+    gain = delta.where(delta > 0, 0.0)
+    loss = -delta.where(delta < 0, 0.0)
+    avg_gain = gain.rolling(window=period).mean()
+    avg_loss = loss.rolling(window=period).mean()
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+# MACD 계산 함수
+def compute_macd(series, fast=12, slow=26, signal=9):
+    exp1 = series.ewm(span=fast, adjust=False).mean()
+    exp2 = series.ewm(span=slow, adjust=False).mean()
+    macd = exp1 - exp2
+    signal_line = macd.ewm(span=signal, adjust=False).mean()
+    return macd, signal_line
 
 # Streamlit UI 설정
 st.title("ETF 매수 타이밍 분석기")
@@ -31,10 +49,8 @@ if data.empty:
     st.stop()
 
 # 기술적 지표 계산
-data['RSI'] = ta.rsi(data['Close'], length=14)
-macd = ta.macd(data['Close'])
-data['MACD'] = macd['MACD_12_26_9']
-data['MACD_signal'] = macd['MACDs_12_26_9']
+data['RSI'] = compute_rsi(data['Close'], period=14)
+data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
 data['MA20'] = data['Close'].rolling(window=20).mean()
 data['Lower_BB'] = data['MA20'] - 2 * data['Close'].rolling(window=20).std()
 
@@ -55,7 +71,6 @@ st.write(f"- 현재가 ≦ 볼린저밴드 하단 +5%: {bb_cond}")
 
 if true_count >= 2:
     st.success("✅ 지금은 매수 타이밍일 수 있습니다. (2개 이상 조건 충족)")
-    # SCHD 특화 추천 메시지
     if selected_etf == "SCHD":
         st.info("**SCHD는 기술적 조정과 고배당 특성으로 인해 현재 가격이 특히 매력적인 매수 구간입니다. 장기 보유 + 배당 전략에 적합합니다.**")
 else:
