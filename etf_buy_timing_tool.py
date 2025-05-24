@@ -85,8 +85,8 @@ else:
     raw_data['MA20'] = raw_data['Close'].rolling(window=20).mean()
     raw_data['STD20'] = raw_data['Close'].rolling(window=20).std()
     raw_data['Lower_BB'] = raw_data['MA20'] - 2 * raw_data['STD20']
-    # 지표 포함 후 최근 30거래일만 추출
-    data = raw_data.tail(30)
+    # 지표 포함 후 최근 60거래일만 추출
+    data = raw_data.tail(60)
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
@@ -145,7 +145,7 @@ else:
     st.warning("❌ 아직 매수 타이밍으로 보기 어렵습니다.")
 
 # 캔들차트 표시
-st.subheader("최근 30일간 캔들차트")
+st.subheader("최근 60일간 캔들차트")
 add_plots = []
 if 'MA20' in data.columns and not data['MA20'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['MA20'], color='orange', width=1.2))
