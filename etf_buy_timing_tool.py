@@ -94,7 +94,10 @@ data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 
 # 유효한 컬럼만 필터링하여 dropna에 사용
 required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
-existing_cols = [col for col in required_cols if col in data.columns and data[col].notna().any()]
+existing_cols = []
+for col in required_cols:
+    if col in data.columns and data[col].notna().any():
+        existing_cols.append(col)
 
 if not existing_cols:
     st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
