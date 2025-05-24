@@ -88,10 +88,15 @@ else:
     full_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
     # 존재하는 컬럼만 필터링
     safe_cols = [col for col in full_cols if col in raw_data.columns and raw_data[col].notna().any()]
+    missing_cols = [col for col in full_cols if col not in raw_data.columns]
     if not safe_cols:
-        st.error("기술적 지표 컬럼이 누락되었거나 NaN 값만 존재합니다.")
+        st.error(f"기술적 지표 컬럼이 누락되었거나 NaN 값만 존재합니다. 누락된 컬럼: {missing_cols}")
         st.stop()
-    valid_data = raw_data.dropna(subset=safe_cols)
+    try:
+        valid_data = raw_data.dropna(subset=safe_cols)
+    except KeyError as e:
+        st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {e}")
+        st.stop()
     data = valid_data.tail(60)
 
 if data.empty:
