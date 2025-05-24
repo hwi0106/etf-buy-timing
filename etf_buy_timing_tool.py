@@ -52,7 +52,8 @@ if data.empty:
 data['RSI'] = compute_rsi(data['Close'], period=14)
 data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
 data['MA20'] = data['Close'].rolling(window=20).mean()
-data['Lower_BB'] = data['MA20'] - 2 * data['Close'].rolling(window=20).std()
+data['STD20'] = data['Close'].rolling(window=20).std()
+data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 
 # 매수 조건
 rsi_cond = data['RSI'].iloc[-1] < 40
