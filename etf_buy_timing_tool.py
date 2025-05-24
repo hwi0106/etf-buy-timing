@@ -154,6 +154,7 @@ if 'MA20' in data.columns and not data['MA20'].dropna().empty:
 if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0))
 
+data = data[data.index.to_series().diff().dt.days.fillna(1) <= 5]  # 장이 열린 날만 유지
 fig, _ = mpf.plot(
     data,
     type='candle',
