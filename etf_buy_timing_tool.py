@@ -65,19 +65,21 @@ selected_etf = st.selectbox("ETF 종목을 선택하세요:", list(etfs.keys()))
 ticker = etfs[selected_etf]
 
 end_date = datetime.datetime.today()
-start_date = end_date - datetime.timedelta(days=30)
+# 해외 ETF는 넉넉하게 데이터를 요청하고 최근 30 거래일만 자름
+start_date = end_date - datetime.timedelta(days=90)
 
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
 else:
     import yfinance as yf
-    data = yf.download(ticker, start=start_date, end=end_date, progress=False)
-    if data.empty or len(data) < 20:
-        st.error("해외 ETF 데이터가 충분하지 않습니다. 최소 20일치 이상 필요합니다.")
+    raw_data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+    if raw_data.empty:
+        st.error("해외 ETF 데이터를 가져올 수 없습니다.")
         st.stop()
-    data = data[['Open', 'High', 'Low', 'Close']].copy()
-    data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna()
+    raw_data = raw_data[['Open', 'High', 'Low', 'Close']].dropna()
+    raw_data[['Open', 'High', 'Low', 'Close']] = raw_data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+    raw_data = raw_data.dropna()
+    data = raw_data.tail(30)
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
