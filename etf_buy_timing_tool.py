@@ -65,52 +65,36 @@ selected_etf = st.selectbox("ETF 종목을 선택하세요:", list(etfs.keys()))
 ticker = etfs[selected_etf]
 
 end_date = datetime.datetime.today()
-start_date = end_date - datetime.timedelta(days=60)  # 넉넉히 가져오고 최근 20거래일만 사용
+start_date = end_date - datetime.timedelta(days=30)
 
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
-    data = data.tail(20)  # 최근 20거래일만 사용
 else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
-    if data.empty:
-        st.error("해외 ETF 데이터를 불러오지 못했습니다.")
-        st.stop()
-    data = data[['Open', 'High', 'Low', 'Close']].copy()
-    data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna()
-    data = data.tail(20)  # 최근 20거래일만 사용
+    data = data[['Open', 'High', 'Low', 'Close']].dropna().astype(float)
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
     st.stop()
 
 # 기술적 지표 계산
-if len(data) >= 20:
-    data['RSI'] = compute_rsi(data['Close'], period=14)
-    data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
-    data['MA20'] = data['Close'].rolling(window=20).mean()
-    data['STD20'] = data['Close'].rolling(window=20).std()
-    data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
-else:
-    st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 최소 26일 이상의 데이터가 필요합니다.")
-    st.stop()
+data['RSI'] = compute_rsi(data['Close'], period=14)
+data['MACD'], data['MACD_signal'] = compute_macd(data['Close'])
+data['MA20'] = data['Close'].rolling(window=20).mean()
+data['STD20'] = data['Close'].rolling(window=20).std()
+data['Lower_BB'] = data['MA20'] - 2 * data['STD20']
 
 # 유효한 컬럼만 필터링하여 dropna에 사용
 required_cols = ['RSI', 'MACD', 'MACD_signal', 'MA20', 'STD20', 'Lower_BB']
 existing_cols = [col for col in required_cols if col in data.columns and data[col].notna().any()]
 
-missing_cols = [col for col in required_cols if col not in data.columns or data[col].isna().all()]
-if missing_cols:
-    st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {missing_cols}")
+if not existing_cols:
+    st.error("기술적 지표 계산에 필요한 데이터가 없습니다.")
     st.stop()
 
-safe_cols = [col for col in existing_cols if col in data.columns and col in data.keys()]
-try:
-    filtered = data.dropna(subset=safe_cols)
-except KeyError as e:
-    st.error(f"기술적 지표 컬럼이 누락되어 분석할 수 없습니다: {e}")
-    st.stop()
+safe_cols = [col for col in existing_cols if col in data.columns]
+filtered = data.dropna(subset=safe_cols)
 if filtered.empty:
     st.error("기술적 지표 계산을 위한 데이터가 부족합니다. 30일치 이상 가격 데이터가 필요합니다.")
     st.stop()
@@ -147,7 +131,7 @@ if 'MA20' in data.columns and not data['MA20'].dropna().empty:
 if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['Lower_BB'], color='blue', linestyle='--', width=1.0))
 
-fig, axlist = mpf.plot(
+fig, _ = mpf.plot(
     data,
     type='candle',
     style='charles',
