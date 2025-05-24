@@ -67,10 +67,11 @@ start_date = end_date - datetime.timedelta(days=30)
 # 데이터 불러오기
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
-    data = data.astype(float)
+    data = data.dropna().astype(float)
 else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
+    data = data[['Open', 'High', 'Low', 'Close']].dropna().astype(float)
 data = data[['Open', 'High', 'Low', 'Close']].astype(float)
 
 if data.empty:
