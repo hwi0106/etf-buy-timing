@@ -68,15 +68,15 @@ if selected_etf == "KODEX S&P500":
     data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 elif selected_etf == "QQQM":
-    data = get_korean_stock_price("523120")
+    data = get_korean_stock_price("ETF103546")
     data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 elif selected_etf == "SPLG":
-    data = get_korean_stock_price("529130")
+    data = get_korean_stock_price("ETF103450")
     data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 elif selected_etf == "SCHD":
-    data = get_korean_stock_price("560730")
+    data = get_korean_stock_price("ETF103467")
     data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 
