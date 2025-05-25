@@ -120,5 +120,8 @@ else:
     st.warning("❌ 아직 매수 타이밍으로 보기 어렵습니다.")
 
 st.subheader("최근 30일간 가격 데이터")
-st.line_chart(data[['Close']])
+if 'Close' in data.columns:
+    st.line_chart(data[['Close']])
+else:
+    st.warning("📉 'Close' 컬럼이 없어 차트를 표시할 수 없습니다.")
 st.dataframe(data.tail(10))
