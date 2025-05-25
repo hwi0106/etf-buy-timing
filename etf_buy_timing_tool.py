@@ -62,15 +62,20 @@ ticker = etfs[selected_etf]
 end_date = datetime.datetime.today()
 start_date = end_date - datetime.timedelta(days=30)
 
+# 데이터 불러오기
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
     data = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna(subset=['Open', 'High', 'Low', 'Close']).astype(float)
+    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
-    data = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna(subset=['Open', 'High', 'Low', 'Close']).astype(float)
+    try:
+        data = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+        data = data.dropna(subset=['Open', 'High', 'Low', 'Close']).astype(float)
+    except KeyError as e:
+        st.error(f"해외 ETF 데이터 오류: {e}. 다운로드된 컬럼: {list(data.columns)}")
+        st.stop()
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
