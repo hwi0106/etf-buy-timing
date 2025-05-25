@@ -68,10 +68,14 @@ if selected_etf == "KODEX S&P500":
 else:
     raw = yf.download(ticker, start=start_date, end=end_date)
     if isinstance(raw.columns, pd.MultiIndex):
-        raw.columns = raw.columns.get_level_values(-1)
-    data = raw[['Open', 'High', 'Low', 'Close']].copy()
-    data = data.dropna()
-    data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].astype(float)
+        raw.columns = raw.columns.get_level_values(0)
+    if set(['Open', 'High', 'Low', 'Close']).issubset(raw.columns):
+        data = raw[['Open', 'High', 'Low', 'Close']].copy()
+        data = data.dropna()
+        data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].astype(float)
+    else:
+        st.error("해외 ETF 데이터 오류: ['Open', 'High', 'Low', 'Close'] 컬럼을 찾을 수 없습니다.")
+        st.stop()
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
