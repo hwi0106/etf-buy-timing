@@ -68,17 +68,20 @@ if selected_etf == "KODEX S&P500":
     data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 elif selected_etf == "QQQM":
-    data = get_korean_stock_price("ETF103546")
-    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
+    import yfinance as yf
+    raw = yf.download("QQQM", start=start_date, end=end_date)
+    data = raw[['Open', 'High', 'Low', 'Close']].copy()
+    data = data.dropna().astype(float)
 elif selected_etf == "SPLG":
-    data = get_korean_stock_price("ETF103450")
-    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
+    import yfinance as yf
+    raw = yf.download("SPLG", start=start_date, end=end_date)
+    data = raw[['Open', 'High', 'Low', 'Close']].copy()
+    data = data.dropna().astype(float)
 elif selected_etf == "SCHD":
-    data = get_korean_stock_price("ETF103467")
-    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
+    import yfinance as yf
+    raw = yf.download("SCHD", start=start_date, end=end_date)
+    data = raw[['Open', 'High', 'Low', 'Close']].copy()
+    data = data.dropna().astype(float)
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
