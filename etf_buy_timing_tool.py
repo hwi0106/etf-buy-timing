@@ -125,7 +125,7 @@ if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0))
 
 fig, axlist = mpf.plot(
-    data[['Open', 'High', 'Low', 'Close']].copy(),
+    data[['Open', 'High', 'Low', 'Close']].copy().loc[data.index],
     type='candle',
     style='charles',
     mav=(20,),
