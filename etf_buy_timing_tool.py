@@ -65,13 +65,18 @@ start_date = end_date - datetime.timedelta(days=30)
 # 데이터 불러오기
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
-    data = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 else:
     import yfinance as yf
     data = yf.download(ticker, start=start_date, end=end_date)
     try:
-        data = data[['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+        if isinstance(data.columns, pd.MultiIndex):
+            data = pd.concat({col: data[col][ticker] for col in ['Open', 'High', 'Low', 'Close']}, axis=1)
+        else:
+            data = data[['Open', 'High', 'Low', 'Close']]
+        data = data.apply(pd.to_numeric, errors='coerce')
+        data = data.dropna(subset=['Open', 'High', 'Low', 'Close']).astype(float).apply(pd.to_numeric, errors='coerce')
         data = data.dropna(subset=['Open', 'High', 'Low', 'Close']).astype(float)
     except KeyError as e:
         st.error(f"해외 ETF 데이터 오류: {e}. 다운로드된 컬럼: {list(data.columns)}")
