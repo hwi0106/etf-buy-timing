@@ -67,20 +67,18 @@ if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
     data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
     data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
-else:
-    import yfinance as yf
-    data = yf.download(ticker, start=start_date, end=end_date)
-    try:
-        if isinstance(data.columns, pd.MultiIndex):
-            data = pd.concat({col: data[col][ticker] for col in ['Open', 'High', 'Low', 'Close']}, axis=1)
-        else:
-            data = data[['Open', 'High', 'Low', 'Close']]
-        data = data.apply(pd.to_numeric, errors='coerce')
-        data = data.dropna(subset=['Open', 'High', 'Low', 'Close']).astype(float).apply(pd.to_numeric, errors='coerce')
-        data = data.dropna(subset=['Open', 'High', 'Low', 'Close']).astype(float)
-    except KeyError as e:
-        st.error(f"해외 ETF 데이터 오류: {e}. 다운로드된 컬럼: {list(data.columns)}")
-        st.stop()
+elif selected_etf == "QQQM":
+    data = get_korean_stock_price("523120")
+    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
+elif selected_etf == "SPLG":
+    data = get_korean_stock_price("529130")
+    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
+elif selected_etf == "SCHD":
+    data = get_korean_stock_price("560730")
+    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
+    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
