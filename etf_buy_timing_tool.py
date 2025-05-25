@@ -131,6 +131,7 @@ if selected_etf == "KODEX S&P500":
 else:
     plot_data = data[['Open', 'High', 'Low', 'Close']].copy()
     plot_data = plot_data.astype(float)
+    plot_data = plot_data[plot_data[['Open', 'High', 'Low', 'Close']].notnull().all(axis=1)]
     plot_data.index = pd.to_datetime(plot_data.index)
     plot_data.index.name = 'Date'
 
