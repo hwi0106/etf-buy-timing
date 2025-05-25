@@ -130,8 +130,9 @@ if selected_etf == "KODEX S&P500":
     plot_data = data[['Open', 'High', 'Low', 'Close']].copy()
 else:
     plot_data = data[['Open', 'High', 'Low', 'Close']].copy()
-    plot_data.index.name = 'Date'
+    plot_data = plot_data.astype(float)
     plot_data.index = pd.to_datetime(plot_data.index)
+    plot_data.index.name = 'Date'
 
 fig, axlist = mpf.plot(
     plot_data.dropna(),
