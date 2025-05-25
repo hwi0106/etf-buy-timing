@@ -3,8 +3,8 @@ import pandas as pd
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-import mplfinance as mpf
 import requests
+import yfinance as yf
 
 # 한글 폰트 설정
 plt.rcParams['font.family'] = 'DejaVu Sans'
@@ -65,24 +65,13 @@ start_date = end_date - datetime.timedelta(days=30)
 # 데이터 불러오기
 if selected_etf == "KODEX S&P500":
     data = get_korean_stock_price("379800")
-    data = data.loc[:, ['Open', 'High', 'Low', 'Close']].apply(pd.to_numeric, errors='coerce')
-    data = data.dropna().astype({'Open': 'float', 'High': 'float', 'Low': 'float', 'Close': 'float'})
-elif selected_etf == "QQQM":
-    import yfinance as yf
-    raw = yf.download("QQQM", start=start_date, end=end_date)
+else:
+    raw = yf.download(ticker, start=start_date, end=end_date)
+    if isinstance(raw.columns, pd.MultiIndex):
+        raw.columns = raw.columns.get_level_values(-1)
     data = raw[['Open', 'High', 'Low', 'Close']].copy()
     data = data.dropna()
     data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].astype(float)
-elif selected_etf == "SPLG":
-    import yfinance as yf
-    raw = yf.download("SPLG", start=start_date, end=end_date)
-    data = raw[['Open', 'High', 'Low', 'Close']].copy()
-    data = data.dropna().astype(float)
-elif selected_etf == "SCHD":
-    import yfinance as yf
-    raw = yf.download("SCHD", start=start_date, end=end_date)
-    data = raw[['Open', 'High', 'Low', 'Close']].copy()
-    data = data.dropna().astype(float)
 
 if data.empty:
     st.error("데이터를 불러오지 못했습니다. 티커를 확인해주세요.")
@@ -123,8 +112,6 @@ st.subheader("최근 30일간 가격 데이터")
 try:
     fig, ax = plt.subplots(figsize=(8, 4))
     close_data = data.copy()
-    if isinstance(close_data.columns, pd.MultiIndex):
-        close_data.columns = close_data.columns.get_level_values(-1)
     ax.plot(close_data.index, close_data['Close'], label='Close')
     ax.set_ylim(close_data['Close'].min() * 0.95, close_data['Close'].max() * 1.05)
     ax.set_title(f'{selected_etf} 종가 추이')
@@ -134,4 +121,5 @@ try:
     st.pyplot(fig)
 except Exception as e:
     st.warning(f"📉 차트 표시 중 오류 발생: {e}")
+
 st.dataframe(data.tail(10))
