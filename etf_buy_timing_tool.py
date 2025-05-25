@@ -119,32 +119,6 @@ if true_count >= 2:
 else:
     st.warning("❌ 아직 매수 타이밍으로 보기 어렵습니다.")
 
-st.subheader("최근 30일간 캔들차트")
-add_plots = []
-if 'MA20' in data.columns and not data['MA20'].dropna().empty:
-    add_plots.append(mpf.make_addplot(data['MA20'].dropna(), color='orange', width=1.2))
-if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
-    add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0))
-
-if selected_etf == "KODEX S&P500":
-    plot_data = data[['Open', 'High', 'Low', 'Close']].copy()
-else:
-    plot_data = data[['Open', 'High', 'Low', 'Close']].copy()
-    plot_data = plot_data.astype(float)
-    plot_data = plot_data[plot_data[['Open', 'High', 'Low', 'Close']].notnull().all(axis=1)]
-    plot_data.index = pd.to_datetime(plot_data.index)
-    plot_data.index.name = 'Date'
-
-fig, axlist = mpf.plot(
-    plot_data.dropna(),
-    type='candle',
-    style='charles',
-    mav=(20,),
-    volume=False,
-    addplot=add_plots,
-    show_nontrading=True,
-    datetime_format='%Y-%m-%d',
-    xrotation=45,
-    returnfig=True
-)
-st.pyplot(fig)
+st.subheader("최근 30일간 가격 데이터")
+st.line_chart(data[['Close']])
+st.dataframe(data.tail(10))
