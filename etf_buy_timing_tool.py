@@ -122,13 +122,16 @@ else:
 st.subheader("최근 30일간 가격 데이터")
 try:
     fig, ax = plt.subplots(figsize=(8, 4))
-ax.plot(data.index, data['Close'], label='Close')
-ax.set_ylim(data['Close'].min() * 0.95, data['Close'].max() * 1.05)
-ax.set_title(f'{selected_etf} 종가 추이')
-ax.set_ylabel('가격')
-ax.tick_params(axis='x', rotation=45)
-ax.legend()
-st.pyplot(fig) if isinstance(data.columns, pd.MultiIndex) else data[['Close']])
+    close_data = data.copy()
+    if isinstance(close_data.columns, pd.MultiIndex):
+        close_data.columns = close_data.columns.get_level_values(-1)
+    ax.plot(close_data.index, close_data['Close'], label='Close')
+    ax.set_ylim(close_data['Close'].min() * 0.95, close_data['Close'].max() * 1.05)
+    ax.set_title(f'{selected_etf} 종가 추이')
+    ax.set_ylabel('가격')
+    ax.tick_params(axis='x', rotation=45)
+    ax.legend()
+    st.pyplot(fig)
 except Exception as e:
     st.warning(f"📉 차트 표시 중 오류 발생: {e}")
 st.dataframe(data.tail(10))
