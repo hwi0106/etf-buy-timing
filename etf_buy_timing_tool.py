@@ -126,8 +126,15 @@ if 'MA20' in data.columns and not data['MA20'].dropna().empty:
 if 'Lower_BB' in data.columns and not data['Lower_BB'].dropna().empty:
     add_plots.append(mpf.make_addplot(data['Lower_BB'].dropna(), color='blue', linestyle='--', width=1.0))
 
+if selected_etf == "KODEX S&P500":
+    plot_data = data[['Open', 'High', 'Low', 'Close']].copy()
+else:
+    plot_data = data[['Open', 'High', 'Low', 'Close']].copy()
+    plot_data.index.name = 'Date'
+    plot_data.index = pd.to_datetime(plot_data.index)
+
 fig, axlist = mpf.plot(
-    data[['Open', 'High', 'Low', 'Close']].dropna().astype(float).loc[data.dropna().index],
+    plot_data.dropna(),
     type='candle',
     style='charles',
     mav=(20,),
