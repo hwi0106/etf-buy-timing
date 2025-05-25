@@ -71,7 +71,8 @@ elif selected_etf == "QQQM":
     import yfinance as yf
     raw = yf.download("QQQM", start=start_date, end=end_date)
     data = raw[['Open', 'High', 'Low', 'Close']].copy()
-    data = data.dropna().astype(float)
+    data = data.dropna().copy()
+data[['Open', 'High', 'Low', 'Close']] = data[['Open', 'High', 'Low', 'Close']].astype(float)
 elif selected_etf == "SPLG":
     import yfinance as yf
     raw = yf.download("SPLG", start=start_date, end=end_date)
